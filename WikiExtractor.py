@@ -61,6 +61,7 @@ import argparse
 import bz2
 import codecs
 import cgi
+import string
 import fileinput
 import logging
 import os.path
@@ -183,6 +184,7 @@ options = SimpleNamespace(
     # Shared objects holding templates, redirects and cache
     templates = {},
     redirects = {},
+    link_redirects = {},
     # cache of parser templates
     # FIXME: sharing this with a Manager slows down.
     templateCache = {},
@@ -2420,7 +2422,13 @@ def makeInternalLink(title, label):
         if colon2 > 1 and title[colon + 1:colon2] not in options.acceptedNamespaces:
             return ''
     if options.keepLinks:
-        return '<a href="%s">%s</a>' % (quote(title.encode('utf-8')), label)
+        ### begin hack for redirects
+        title = title.capitalize()
+        if title in options.link_redirects:
+            title = options.link_redirects[title].capitalize()
+        link = quote(title.encode('utf-8'))
+        return '<a href="%s">%s</a>' % (link, label)
+        ### end hack for redirects
     else:
         return label
 
@@ -2845,6 +2853,20 @@ def pages_from(input):
         elif inText:
             page.append(line)
         elif tag == '/page':
+            assert title[0] not in string.ascii_lowercase, f"{title}"
+
+            #### begin hack for redirects
+            if redirect:
+                #print(title)
+                #print(page)
+                m = re.search('#REDIRECT.*?\[\[([^\]]*)]]', ''.join(page), re.IGNORECASE|re.DOTALL)
+                if m:
+                    #print(m.group(1))
+                    options.link_redirects[title] = m.group(1)  # normalizeTitle(m.group(1))
+                else:
+                    logging.warning("Unable to parse redirect", title, repr(''.join(page)))
+            #### end hack for redirects
+
             if id != last_id and not redirect:
                 yield (id, revid, title, ns,catSet, page)
                 last_id = id
@@ -2983,6 +3005,11 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
         extractor.daemon = True  # only live while parent process lives
         extractor.start()
         workers.append(extractor)
+
+    ### begin hack for redirects
+    assert len(options.link_redirects) > 0, "link_redirects not filled."
+    logging.info(f"{len(options.link_redirects)} redirect pages in cache")
+    ### end hack for redirects
 
     # Mapper process
     page_num = 0
@@ -3262,6 +3289,14 @@ def main():
             if os.path.exists(args.templates):
                 with open(args.templates) as file:
                     load_templates(file)
+            else:
+                file = fileinput.FileInput(input_file, openhook=fileinput.hook_compressed)
+                if input_file == '-':
+                    # can't scan then reset stdin; must error w/ suggestion to specify template_file
+                    raise ValueError("to use templates with stdin dump, must supply explicit template-file")
+                logging.info("Preprocessing '%s' to collect template definitions: this may take some time.", input_file)
+                load_templates(file, args.templates)
+                file.close()
 
         file = fileinput.FileInput(input_file, openhook=fileinput.hook_compressed)
         for page_data in pages_from(file):
