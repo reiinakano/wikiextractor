@@ -849,6 +849,10 @@ class Extractor(object):
         # https://it.wikipedia.org/wiki/Speciale:EspandiTemplate
 
         res = ''
+
+        # This "fix" is a hack. something about train station pages break it
+        if self.recursion_exceeded_1_errs > 1000:
+            return res
         if self.frame.depth >= self.maxTemplateRecursionLevels:
             self.recursion_exceeded_1_errs += 1
             return res
@@ -2954,6 +2958,11 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
                                            openhook=fileinput.hook_compressed)
                 load_templates(file)
                 file.close()
+                ### begin hack for redirects
+                with open(template_file + '_link_redirects') as link_redirects_file:
+                    logging.info("Loading link redirects from: %s", template_file + 'link_redirects')
+                    options.link_redirects = json.load(link_redirects_file)
+                ### end hack for redirects
             else:
                 if input_file == '-':
                     # can't scan then reset stdin; must error w/ suggestion to specify template_file
@@ -2961,6 +2970,11 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
                 logging.info("Preprocessing '%s' to collect template definitions: this may take some time.", input_file)
                 load_templates(input, template_file)
                 input.close()
+                ### begin hack for redirects
+                with open(template_file + '_link_redirects', 'w') as link_redirects_file:
+                    json.dump(options.link_redirects, link_redirects_file)
+                    logging.info("Saved link redirects to: %s", template_file + '_link_redirects')
+                ### end hack for redirects
                 input = fileinput.FileInput(input_file, openhook=fileinput.hook_compressed)
         template_load_elapsed = default_timer() - template_load_start
         logging.info("Loaded %d templates in %.1fs", len(options.templates), template_load_elapsed)
