@@ -2450,6 +2450,7 @@ def makeInternalLink(title, label):
             return ''
     if options.keepLinks:
         ### begin hack for redirects
+        title = title.split('#')[0]
         title = safe_capitalize(title)
         if title in options.link_redirects:
             title = safe_capitalize(options.link_redirects[title])
