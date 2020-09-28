@@ -578,7 +578,7 @@ class Extractor(object):
             # able to encode the string if the output is sys.stdout
             out_str = json.dumps(json_data, ensure_ascii=False)
             if out == sys.stdout:   # option -a or -o -
-                out_str = out_str.encode('utf-8')
+                out_str = str(out_str.encode('utf-8'))
             out.write(out_str)
             out.write('\n')
         else:
@@ -592,7 +592,7 @@ class Extractor(object):
             out.write(header)
             for line in text:
                 if out == sys.stdout:   # option -a or -o -
-                    line = line.encode('utf-8')
+                    line = str(line.encode('utf-8'))
                 out.write(line)
                 out.write('\n')
             out.write(footer)
