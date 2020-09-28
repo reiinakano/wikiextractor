@@ -281,7 +281,7 @@ def get_url(uid):
 
 # ------------------------------------------------------------------------------
 
-selfClosingTags = ('br', 'hr', 'nobr', 'ref', 'references', 'nowiki')
+selfClosingTags = ('br', 'hr', 'nobr', 'ref', 'references', 'nowiki', 'templatestyles')
 
 placeholder_tags = {'math': 'formula', 'code': 'codice'}
 
@@ -578,6 +578,7 @@ class Extractor(object):
             # able to encode the string if the output is sys.stdout
             out_str = json.dumps(json_data, ensure_ascii=False)
             if out == sys.stdout:   # option -a or -o -
+                print(json_data['text']) # this branch is only used for debug so printing is ok
                 out_str = str(out_str.encode('utf-8'))
             out.write(out_str)
             out.write('\n')
@@ -2654,11 +2655,11 @@ def compact(text):
                         # emit open sections
                         items = sorted(headers.items())
                         for _, v in items:
-                            page.append("Section::::" + v)
+                            page.append("Section: " + v)
                     headers.clear()
                     # use item count for #-lines
                     listCount[i - 1] += 1
-                    bullet = 'BULLET::::%d. ' % listCount[i - 1] if n == '#' else 'BULLET::::- '
+                    bullet = '%d. ' % listCount[i - 1] if n == '#' else '- '
                     page.append('{0:{1}s}'.format(bullet, len(listLevel)) + line)
                 elif options.toHTML:
                     if n not in listItem: 
@@ -2682,7 +2683,7 @@ def compact(text):
             if options.keepSections:
                 items = sorted(headers.items())
                 for i, v in items:
-                    page.append("Section::::" + v)
+                    page.append("Section: " + v)
             headers.clear()
             page.append(line)  # first line
             emptySection = False
@@ -3346,10 +3347,12 @@ def main():
         file = fileinput.FileInput(input_file, openhook=fileinput.hook_compressed)
         for page_data in pages_from(file):
             id, revid, title, ns,catSet, page = page_data
-            if title == '7 (New York City Subway service)':
+            print(id, title)
+            if 'Austin' in title:
                 a = time.time()
                 Extractor(id, revid, title, page).extract(sys.stdout)
                 logging.info(f"took {time.time() - a} seconds")
+                return
         file.close()
         return
 
