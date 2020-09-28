@@ -2427,15 +2427,20 @@ def makeInternalLink(title, label):
             return ''
     if options.keepLinks:
         ### begin hack for redirects
-        title = title.capitalize()
+        title = safe_capitalize(title)
         if title in options.link_redirects:
-            title = options.link_redirects[title].capitalize()
+            title = safe_capitalize(options.link_redirects[title])
         link = quote(title.encode('utf-8'))
         return '<a href="%s">%s</a>' % (link, label)
         ### end hack for redirects
     else:
         return label
 
+
+def safe_capitalize(x):
+    if len(x) == 0:
+        return x
+    return x[0].upper() + x[1:]
 
 # ----------------------------------------------------------------------
 # External links
@@ -3091,7 +3096,11 @@ def extract_process(opts, i, jobs_queue, output_queue):
             try:
                 e = Extractor(*job[:4]) # (id, revid, title, page)
                 page = None              # free memory
+                start_time = time.time()
                 e.extract(out)
+                process_time = time.time() - start_time
+                if process_time > 10:
+                    logging.exception(f'took {process_time} secs to process {id} {page_num} {title}')
                 text = out.getvalue()
             except:
                 text = ''
@@ -3315,7 +3324,10 @@ def main():
         file = fileinput.FileInput(input_file, openhook=fileinput.hook_compressed)
         for page_data in pages_from(file):
             id, revid, title, ns,catSet, page = page_data
-            Extractor(id, revid, title, page).extract(sys.stdout)
+            if title == '7 (New York City Subway service)':
+                a = time.time()
+                Extractor(id, revid, title, page).extract(sys.stdout)
+                logging.info(f"took {time.time() - a} seconds")
         file.close()
         return
 
