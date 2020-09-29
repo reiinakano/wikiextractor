@@ -2573,8 +2573,6 @@ def compact(text):
     """
 
     page = []             # list of paragraph
-    headers = {}          # Headers for unfilled sections
-    emptySection = False  # empty sections are discarded
     listLevel = []        # nesting of lists
     listCount = []        # count of each list (it should be always in the same length of listLevel)
     for line in text.split('\n'):
@@ -2587,27 +2585,8 @@ def compact(text):
                         page.append(listClose[c])
                 listLevel = []
                 listCount = []
-                emptySection = False
             elif page and page[-1]:
                 page.append('')
-            continue
-        # Handle section titles
-        m = section.match(line)
-        if m:
-            title = m.group(2)
-            lev = len(m.group(1)) # header level
-            if options.toHTML:
-                page.append("<h%d>%s</h%d>" % (lev, title, lev))
-            if title and title[-1] not in '!?':
-                title += '.'    # terminate sentence.
-            headers[lev] = title
-            # drop previous headers
-            for i in list(headers.keys()):
-                if i > lev:
-                    del headers[i]
-            emptySection = True
-            listLevel = []
-            listCount = []
             continue
         # Handle page title
         elif line.startswith('++'):
@@ -2652,12 +2631,6 @@ def compact(text):
             line = line[i:].strip()
             if line:  # FIXME: n is '"'
                 if options.keepLists:
-                    if options.keepSections:
-                        # emit open sections
-                        items = sorted(headers.items())
-                        for _, v in items:
-                            page.append("Section: " + v)
-                    headers.clear()
                     # use item count for #-lines
                     listCount[i - 1] += 1
                     bullet = '%d. ' % listCount[i - 1] if n == '#' else '- '
@@ -2680,18 +2653,8 @@ def compact(text):
         # Drop irrelevant lines
         elif (line[0] == '(' and line[-1] == ')') or line.strip('.-') == '':
             continue
-        elif len(headers):
-            if options.keepSections:
-                items = sorted(headers.items())
-                for i, v in items:
-                    page.append("Section: " + v)
-            headers.clear()
-            page.append(line)  # first line
-            emptySection = False
-        elif not emptySection:
-            # Drop preformatted
-            if line[0] != ' ':  # dangerous
-                page.append(line)
+        else:
+            page.append(line)
     return page
 
 
@@ -3349,7 +3312,7 @@ def main():
         for page_data in pages_from(file):
             id, revid, title, ns,catSet, page = page_data
             print(id, title)
-            if 'Austin' in title:
+            if 'anime' in title.lower():
                 a = time.time()
                 Extractor(id, revid, title, page).extract(sys.stdout)
                 logging.info(f"took {time.time() - a} seconds")
