@@ -2448,10 +2448,12 @@ def makeInternalLink(title, label):
             return ''
     if options.keepLinks:
         ### begin hack for redirects
-        title = title.split('#')[0]
         title = safe_capitalize(title)
+        title = title.split('#')[0]  # Disregard url fragment
         if title in options.link_redirects:
-            title = safe_capitalize(options.link_redirects[title])
+            title = options.link_redirects[title]
+            title = safe_capitalize(title)
+            title = title.split('#')[0]  # We have to do this because the redirect target itself might have a fragment.
         link = quote(title.encode('utf-8'))
         return '<a href="%s">%s</a>' % (link, label)
         ### end hack for redirects
