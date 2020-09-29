@@ -821,8 +821,6 @@ class Extractor(object):
             # then the future html attributes such as 'style'. Finally we drop the remaining '|-' that delimits cells.
             text = re.sub(r'!(?:\s)?style=\"[a-z]+:(?:\d+)%;\"', r'', text)
             text = re.sub(r'!(?:\s)?style="[a-z]+:(?:\d+)%;[a-z]+:(?:#)?(?:[0-9a-z]+)?"', r'', text)
-            text = text.replace('|-', '')
-            text = text.replace('|', '')
         if options.toHTML:
             text = html.escape(text)
         return text
@@ -2646,12 +2644,8 @@ def compact(text):
             listLevel = []
             listCount = []
             page.append(line)
-
-        # Drop residuals of lists
-        elif line[0] in '{|' or line[-1] == '}':
-            continue
         # Drop irrelevant lines
-        elif (line[0] == '(' and line[-1] == ')') or line.strip('.-') == '':
+        elif (line[0] == '(' and line[-1] == ')') or line.strip('.-') == '' or line == ' ':
             continue
         else:
             page.append(line)
