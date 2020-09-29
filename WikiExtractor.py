@@ -3221,7 +3221,7 @@ def main():
                         help="suppress reporting progress info")
     groupS.add_argument("--debug", action="store_true",
                         help="print debug info")
-    groupS.add_argument("-a", "--article", action="store_true",
+    groupS.add_argument("-a", "--article", default="",
                         help="analyze a file containing a single article (debug option)")
     groupS.add_argument("--log_file",
                         help="path to save the log info")
@@ -3312,7 +3312,7 @@ def main():
         for page_data in pages_from(file):
             id, revid, title, ns,catSet, page = page_data
             print(id, title)
-            if 'anime' in title.lower():
+            if args.article in title.lower():
                 a = time.time()
                 Extractor(id, revid, title, page).extract(sys.stdout)
                 logging.info(f"took {time.time() - a} seconds")
