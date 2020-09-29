@@ -2538,10 +2538,10 @@ def replaceExternalLinks(text):
 
 def makeExternalLink(url, anchor):
     """Function applied to wikiLinks"""
-    if options.keepLinks:
-        return '<a href="%s">%s</a>' % (quote(url.encode('utf-8')), anchor)
-    else:
-        return anchor
+    #if options.keepLinks:
+    #    return '<a href="%s">%s</a>' % (quote(url.encode('utf-8')), anchor)
+    # Don't bother keeping external links
+    return anchor
 
 
 def makeExternalImage(url, alt=''):
