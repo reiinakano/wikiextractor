@@ -136,3 +136,9 @@ For further information, visit [the documentation](http://attardi.github.io/wiki
 
 ## License
 The code is made available under the [GNU Affero General Public License v3.0](LICENSE). 
+
+```
+python wikiextractor/WikiExtractor.py ~/enwiki-20200920-pages-articles.xml.bz2 \
+-o ~/enwiki-20200920-processed --json --templates /tmp/templates \
+--compress --links --sections --lists --keep_tables
+```
